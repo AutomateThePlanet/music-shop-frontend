@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chinook Manager</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Your custom JS scripts here -->
+    <style>
+        .table-responsive {
+            margin-bottom: 20px;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: flex-start;
+            /* Adjust this if you want to center or align to the right */
+            gap: 0.5rem;
+            /* Adds a little space between buttons */
+        }
+
+        .action-buttons button {
+            min-width: 80px;
+            /* Adjust this value to your needs */
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Chinook Manager</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showSection('artists')">Artists</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showSection('customers')">Customers</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+
+    <div id="artists" class="container mt-4">
+        <!-- Place the 'Add Artist' button and modal here -->
+        <!-- Button to Open the Modal -->
+        <div class="text-right mb-3"> <!-- Aligns button to the right and adds margin-bottom -->
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#artistModal">
+                Add Artist
+            </button>
+        </div>
+        <!-- The Modal -->
+        <div class="modal" id="artistModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <h4 class="modal-title">New Artist</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <!-- Modal body -->
+                    <div class="modal-body">
+                        <form id="artistForm">
+                            <div class="form-group">
+                                <label for="artistName">Name:</label>
+                                <input type="text" class="form-control" id="artistName" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <!-- Albums Modal -->
+        <div class="modal fade" id="albumsModal" tabindex="-1" aria-labelledby="albumsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="albumsModalLabel">Albums</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="albumsContent" class="container-fluid">
+                            <!-- Albums content will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tracks Modal -->
+        <div class="modal fade" id="tracksModal" tabindex="-1" role="dialog" aria-labelledby="tracksModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="tracksModalLabel">Album Tracks</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table" id="tracksTable">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Composer</th>
+                                    <th scope="col">Milliseconds</th>
+                                    <th scope="col">Bytes</th>
+                                    <th scope="col">Unit Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Tracks will be dynamically inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- The Update Modal -->
+        <div class="modal" id="updateArtistModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <h4 class="modal-title">Update Artist</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <!-- Modal body -->
+                    <div class="modal-body">
+                        <form id="updateArtistForm">
+                            <input type="hidden" id="updateArtistId">
+                            <div class="form-group">
+                                <label for="updateArtistName">Name:</label>
+                                <input type="text" class="form-control" id="updateArtistName" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Update</button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col">
+                <input type="text" id="searchQuery" class="form-control" placeholder="Search artists..."
+                    oninput="searchArtists()">
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered w-100">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">#ID</th>
+                        <th scope="col">Name</th>
+                        <th scope="col" style="width: 200px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="artistList">
+                    <!-- Artist rows will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="customers" class="container mt-4">
+        <div class="text-right mb-3">
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#customerModal">
+                Add Customer
+            </button>
+        </div>
+
+        <!-- The Add Customer Modal -->
+        <div class="modal" id="customerModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <h4 class="modal-title">Add Customer</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <!-- Modal body -->
+                    <div class="modal-body">
+                        <form id="customerForm">
+                            <div class="form-group">
+                                <label for="customerFirstName">First Name:</label>
+                                <input type="text" class="form-control" id="customerFirstName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="customerLastName">Last Name:</label>
+                                <input type="text" class="form-control" id="customerLastName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="customerCompany">Company:</label>
+                                <input type="text" class="form-control" id="customerCompany">
+                            </div>
+                            <div class="form-group">
+                                <label for="customerAddress">Address:</label>
+                                <input type="text" class="form-control" id="customerAddress">
+                            </div>
+                            <div class="form-group">
+                                <label for="customerCity">City:</label>
+                                <input type="text" class="form-control" id="customerCity">
+                            </div>
+                            <div class="form-group">
+                                <label for="customerState">State:</label>
+                                <input type="text" class="form-control" id="customerState">
+                            </div>
+                            <div class="form-group">
+                                <label for="customerCountry">Country:</label>
+                                <input type="text" class="form-control" id="customerCountry">
+                            </div>
+                            <div class="form-group">
+                                <label for="customerPostalCode">Postal Code:</label>
+                                <input type="text" class="form-control" id="customerPostalCode">
+                            </div>
+                            <div class="form-group">
+                                <label for="customerPhone">Phone:</label>
+                                <input type="tel" class="form-control" id="customerPhone">
+                            </div>
+                            <div class="form-group">
+                                <label for="customerFax">Fax:</label>
+                                <input type="tel" class="form-control" id="customerFax">
+                            </div>
+                            <div class="form-group">
+                                <label for="customerEmail">Email:</label>
+                                <input type="email" class="form-control" id="customerEmail" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Save Customer</button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoices Modal -->
+        <div class="modal fade" id="invoicesModal" tabindex="-1" aria-labelledby="invoicesModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="invoicesModalLabel">Invoices</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="invoicesContent" class="container-fluid">
+                            <!-- Invoices content will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="invoiceItemsModal" tabindex="-1" role="dialog"
+            aria-labelledby="invoiceItemsModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="invoiceItemsModalLabel">Invoice Items</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table" id="invoiceItemsTable">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Item Name</th>
+                                    <th scope="col">Quantity</th>
+                                    <th scope="col">Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Invoice items will be dynamically inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employees Modal -->
+        <div class="modal fade" id="employeesModal" tabindex="-1" aria-labelledby="employeesModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="employeesModalLabel">Employees</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="employeesContent" class="container-fluid">
+                            <!-- Employees content will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- The Update Customer Modal -->
+        <div class="modal" id="updateCustomerModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <h4 class="modal-title">Update Customer</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <!-- Modal body -->
+                    <div class="modal-body">
+                        <form id="updateCustomerForm">
+                            <input type="hidden" id="updateCustomerId">
+                            <div class="form-group">
+                                <label for="updateCustomerFirstName">First Name:</label>
+                                <input type="text" class="form-control" id="updateCustomerFirstName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="updateCustomerLastName">Last Name:</label>
+                                <input type="text" class="form-control" id="updateCustomerLastName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="updateCustomerCompany">Company:</label>
+                                <input type="text" class="form-control" id="updateCustomerCompany">
+                            </div>
+                            <div class="form-group">
+                                <label for="updateCustomerAddress">Address:</label>
+                                <input type="text" class="form-control" id="updateCustomerAddress">
+                            </div>
+                            <div class="form-group">
+                                <label for="updateCustomerCity">City:</label>
+                                <input type="text" class="form-control" id="updateCustomerCity">
+                            </div>
+                            <div class="form-group">
+                                <label for="updateCustomerState">State:</label>
+                                <input type="text" class="form-control" id="updateCustomerState">
+                            </div>
+                            <div class="form-group">
+                                <label for="updateCustomerCountry">Country:</label>
+                                <input type="text" class="form-control" id="updateCustomerCountry">
+                            </div>
+                            <div class="form-group">
+                                <label for="updateCustomerPostalCode">Postal Code:</label>
+                                <input type="text" class="form-control" id="updateCustomerPostalCode">
+                            </div>
+                            <div class="form-group">
+                                <label for="updateCustomerPhone">Phone:</label>
+                                <input type="tel" class="form-control" id="updateCustomerPhone">
+                            </div>
+                            <div class="form-group">
+                                <label for="updateCustomerFax">Fax:</label>
+                                <input type="tel" class="form-control" id="updateCustomerFax">
+                            </div>
+                            <div class="form-group">
+                                <label for="updateCustomerEmail">Email:</label>
+                                <input type="email" class="form-control" id="updateCustomerEmail" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Update Customer</button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <input type="text" id="searchCustomerQuery" class="form-control"
+                placeholder="e.g., FirstName:John,LastName:Doe;OR;City:New York">
+            <button onclick="searchCustomers()" class="btn btn-primary">Search</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered w-100">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">#ID</th>
+                        <th scope="col">First Name</th>
+                        <th scope="col">Last Name</th>
+                        <th scope="col">Company</th>
+                        <th scope="col">Address</th>
+                        <th scope="col">City</th>
+                        <th scope="col">State</th>
+                        <th scope="col">Country</th>
+                        <th scope="col">Postal Code</th>
+                        <th scope="col">Phone</th>
+                        <th scope="col">Fax</th>
+                        <th scope="col">Email</th>
+                        <th scope="col" style="width: 200px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="customerList">
+                    <!-- Customer rows will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+
+
+    <script>
+        function showSection(section) {
+            // Hide all sections
+            document.getElementById('artists').style.display = 'none';
+            document.getElementById('customers').style.display = 'none';
+
+            // Remove 'active' class from all nav items
+            document.querySelectorAll('.nav-item').forEach(navItem => {
+                navItem.classList.remove('active');
+            });
+
+            // Show the requested section and add 'active' class to the corresponding nav item
+            document.getElementById(section).style.display = 'block';
+            document.querySelector(`.nav-link[onclick="showSection('${section}')"]`).closest('.nav-item').classList.add('active');
+
+            if (section === 'artists') {
+                fetchArtists();
+            } else if (section === 'customers') {
+                fetchCustomers();
+            }
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+            fetchArtists(); // Call fetchArtists when the page loads
+
+            const artistForm = document.getElementById('artistForm');
+            artistForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const artistName = document.getElementById('artistName').value;
+
+                fetch('/api/artists', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name: artistName }),
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Artist added:', data);
+                        $('#artistModal').modal('hide'); // Hide the modal after submission
+                        fetchArtists(); // Refresh the artist list after adding a new artist
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                    });
+            });
+        });
+
+        function fetchArtists() {
+            fetch('/api/artists')
+                .then(response => response.json())
+                .then(artists => {
+                    const artistList = document.getElementById('artistList');
+                    artistList.innerHTML = ''; // Clear existing artists
+                    artists.forEach(artist => {
+                        addArtistButtons(artist);
+                    });
+                })
+                .catch(error => console.error('Error fetching artists:', error));
+        }
+
+
+        function searchArtists() {
+            const query = document.getElementById('searchQuery').value.trim();
+            let url = '/api/artists';
+
+            if (query) {
+                // Check if query is numeric, then we assume it's an ID search, else it's a name search
+                if (!isNaN(query)) {
+                    url = `/api/artists/${query}`;
+                } else {
+                    url = `/api/artists/search/${encodeURIComponent(query)}`;
+                }
+            }
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        // If nothing is found, clear the list and maybe show a message
+                        document.getElementById('artistList').innerHTML = '';
+                        throw new Error('No artists found');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // The response for ID search will not be an array, so wrap in array if it's not
+                    const artists = Array.isArray(data) ? data : [data];
+                    const artistList = document.getElementById('artistList');
+                    artistList.innerHTML = ''; // Clear the list before repopulating
+                    artists.forEach(artist => {
+                        addArtistButtons(artist);
+                    });
+                })
+                .catch(error => console.error('Error fetching artists:', error));
+        }
+
+        function addArtistButtons(artist) {
+            const tr = document.createElement('tr');
+
+            // ID cell
+            const idCell = document.createElement('td');
+            idCell.textContent = artist.ArtistId;
+
+            // Name cell
+            const nameCell = document.createElement('td');
+            nameCell.textContent = artist.Name;
+
+            // Action cell
+            const actionCell = document.createElement('td');
+            const actionButtonGroup = document.createElement('div');
+            actionButtonGroup.className = 'action-buttons';
+
+            // Update Button
+            const updateBtn = document.createElement('button');
+            updateBtn.className = 'btn btn-secondary btn-sm';
+            updateBtn.textContent = 'Update';
+            updateBtn.onclick = function () { showUpdateModal(artist); };
+
+            // Delete Button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-danger btn-sm';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.onclick = function () { deleteArtist(artist.ArtistId); };
+
+            // Show Albums Button
+            const showAlbumsBtn = document.createElement('button');
+            showAlbumsBtn.className = 'btn btn-info btn-sm';
+            showAlbumsBtn.textContent = 'Show Albums';
+            showAlbumsBtn.onclick = () => showAlbumsModal(artist.ArtistId);
+
+            // Append buttons to the action button group div
+            actionButtonGroup.appendChild(updateBtn);
+            actionButtonGroup.appendChild(deleteBtn);
+            actionButtonGroup.appendChild(showAlbumsBtn);
+
+            // Append the action button group div to the action cell
+            actionCell.appendChild(actionButtonGroup);
+
+            // Append cells to the row
+            tr.appendChild(idCell);
+            tr.appendChild(nameCell);
+            tr.appendChild(actionCell);
+
+            // Append the row to the artist list table
+            document.getElementById('artistList').appendChild(tr);
+        }
+
+
+
+        function showUpdateModal(artist) {
+            // Populate the form with the artist data
+            document.getElementById('updateArtistId').value = artist.ArtistId;
+            document.getElementById('updateArtistName').value = artist.Name;
+
+            // Show the modal
+            $('#updateArtistModal').modal('show');
+        }
+
+        document.getElementById('updateArtistForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Get the artist ID and the new name from the form
+            const artistId = document.getElementById('updateArtistId').value;
+            const artistName = document.getElementById('updateArtistName').value;
+
+            fetch(`/api/artists/${artistId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: artistName }),
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Artist updated:', data);
+                    $('#updateArtistModal').modal('hide'); // Hide the modal after submission
+                    fetchArtists(); // Call fetchArtists to refresh the artist list
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        });
+
+        function deleteArtist(artistId) {
+            if (confirm('Are you sure you want to delete this artist?')) {
+                fetch(`/api/artists/${artistId}`, {
+                    method: 'DELETE',
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log(data.message);
+                        fetchArtists(); // Refresh the artist list
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                    });
+            }
+        }
+
+        function fetchCustomers() {
+            fetch('/api/customers')
+                .then(response => response.json())
+                .then(customers => {
+                    const customerList = document.getElementById('customerList');
+                    customerList.innerHTML = ''; // Clear existing customers
+                    customers.forEach(customer => {
+                        addCustomerButtons(customer);
+                    });
+                })
+                .catch(error => console.error('Error fetching customers:', error));
+        }
+
+        function searchCustomers() {
+            const query = document.getElementById('searchCustomerQuery').value.trim();
+
+            if (!query) {
+                alert('Please enter a search query.');
+                return;
+            }
+
+            // Construct the URL with the entire search query as a single parameter
+            const url = new URL('/api/customerssearch', window.location.origin);
+            url.searchParams.append('search', query); // Use the 'search' query parameter to pass the entire search string
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        document.getElementById('customerList').innerHTML = ''; // Clear existing rows
+                        throw new Error('No customers found');
+                    }
+                    return response.json();
+                })
+                .then(customers => {
+                    const customerList = document.getElementById('customerList');
+                    customerList.innerHTML = ''; // Clear the list before repopulating
+                    customers.forEach(customer => {
+                        addCustomerButtons(customer); // Ensure this function correctly creates and appends customer entries
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching customers:', error.message || error);
+                    alert('Error fetching customers: ' + (error.message || error));
+                });
+        }
+
+        function parseFilters(query) {
+            const filters = [];
+            const filterStrings = query.split(';');
+            for (const filterString of filterStrings) {
+                const parts = filterString.split(':');
+                if (parts.length !== 2) {
+                    return null; // Invalid format
+                }
+                const column = parts[0].trim();
+                const value = parts[1].trim();
+                filters.push({ column, value });
+            }
+            return filters;
+        }
+
+
+
+
+        function addCustomerButtons(customer) {
+            const tr = document.createElement('tr');
+
+            // Create cells for customer data
+            const idCell = document.createElement('td');
+            idCell.textContent = customer.CustomerId;
+
+            const firstNameCell = document.createElement('td');
+            firstNameCell.textContent = customer.FirstName;
+
+            const lastNameCell = document.createElement('td');
+            lastNameCell.textContent = customer.LastName;
+
+            const companyCell = document.createElement('td');
+            companyCell.textContent = customer.Company || ''; // Use empty string if null
+
+            const addressCell = document.createElement('td');
+            addressCell.textContent = customer.Address || '';
+
+            const cityCell = document.createElement('td');
+            cityCell.textContent = customer.City || '';
+
+            const stateCell = document.createElement('td');
+            stateCell.textContent = customer.State || '';
+
+            const countryCell = document.createElement('td');
+            countryCell.textContent = customer.Country || '';
+
+            const postalCodeCell = document.createElement('td');
+            postalCodeCell.textContent = customer.PostalCode || '';
+
+            const phoneCell = document.createElement('td');
+            phoneCell.textContent = customer.Phone || '';
+
+            const faxCell = document.createElement('td');
+            faxCell.textContent = customer.Fax || '';
+
+            const emailCell = document.createElement('td');
+            emailCell.textContent = customer.Email;
+
+            const actionCell = document.createElement('td');
+            const actionButtonGroup = document.createElement('div');
+            actionButtonGroup.className = 'action-buttons';
+
+            const updateBtn = document.createElement('button');
+            updateBtn.className = 'btn btn-secondary btn-sm';
+            updateBtn.textContent = 'Update';
+            updateBtn.onclick = function () { showUpdateCustomerModal(customer); };
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-danger btn-sm';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.onclick = function () { deleteCustomer(customer.CustomerId); };
+
+            // Append buttons to the action button group div
+            actionButtonGroup.appendChild(updateBtn);
+            actionButtonGroup.appendChild(deleteBtn);
+            // Inside addCustomerButtons function
+            const showInvoicesBtn = document.createElement('button');
+            showInvoicesBtn.classList.add('btn', 'btn-info', 'btn-sm');
+            showInvoicesBtn.textContent = 'Show Invoices';
+            showInvoicesBtn.onclick = () => showInvoicesModal(customer.CustomerId);
+            actionButtonGroup.appendChild(showInvoicesBtn);
+
+
+            const showEmployeesBtn = document.createElement('button');
+            showEmployeesBtn.classList.add('btn', 'btn-warning', 'btn-sm');
+            showEmployeesBtn.textContent = 'Show Employees';
+            showEmployeesBtn.onclick = () => showEmployeesModal(customer.CustomerId); // Pass the CustomerId
+            actionButtonGroup.appendChild(showEmployeesBtn);
+            // Append the action button group div to the action cell
+            actionCell.appendChild(actionButtonGroup);
+
+            // Append cells to the row
+            tr.appendChild(idCell);
+            tr.appendChild(firstNameCell);
+            tr.appendChild(lastNameCell);
+            tr.appendChild(companyCell);
+            tr.appendChild(addressCell);
+            tr.appendChild(cityCell);
+            tr.appendChild(stateCell);
+            tr.appendChild(countryCell);
+            tr.appendChild(postalCodeCell);
+            tr.appendChild(phoneCell);
+            tr.appendChild(faxCell);
+            tr.appendChild(emailCell);
+            tr.appendChild(actionCell);
+
+            // Append the row to the customer list table
+            document.getElementById('customerList').appendChild(tr);
+        }
+
+        function showUpdateCustomerModal(customer) {
+            // Fill in the form fields with the customer's current data
+            document.getElementById('updateCustomerId').value = customer.CustomerId;
+            document.getElementById('updateCustomerFirstName').value = customer.FirstName;
+            document.getElementById('updateCustomerLastName').value = customer.LastName;
+            document.getElementById('updateCustomerCompany').value = customer.Company || '';
+            document.getElementById('updateCustomerAddress').value = customer.Address || '';
+            document.getElementById('updateCustomerCity').value = customer.City || '';
+            document.getElementById('updateCustomerState').value = customer.State || '';
+            document.getElementById('updateCustomerCountry').value = customer.Country || '';
+            document.getElementById('updateCustomerPostalCode').value = customer.PostalCode || '';
+            document.getElementById('updateCustomerPhone').value = customer.Phone || '';
+            document.getElementById('updateCustomerFax').value = customer.Fax || '';
+            document.getElementById('updateCustomerEmail').value = customer.Email;
+
+            // Show the modal
+            $('#updateCustomerModal').modal('show');
+        }
+
+        function deleteCustomer(customerId) {
+            if (confirm('Are you sure you want to delete this customer?')) {
+                fetch(`/api/customers/${customerId}`, {
+                    method: 'DELETE',
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log(data.message);
+                        // Refresh the customer list after deletion
+                        fetchCustomers();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }
+        }
+
+        document.getElementById('updateCustomerForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Collect the customer data from the form
+            const customerId = document.getElementById('updateCustomerId').value;
+            const firstName = document.getElementById('updateCustomerFirstName').value;
+            const lastName = document.getElementById('updateCustomerLastName').value;
+            const company = document.getElementById('updateCustomerCompany').value;
+            const address = document.getElementById('updateCustomerAddress').value;
+            const city = document.getElementById('updateCustomerCity').value;
+            const state = document.getElementById('updateCustomerState').value;
+            const country = document.getElementById('updateCustomerCountry').value;
+            const postalCode = document.getElementById('updateCustomerPostalCode').value;
+            const phone = document.getElementById('updateCustomerPhone').value;
+            const fax = document.getElementById('updateCustomerFax').value;
+            const email = document.getElementById('updateCustomerEmail').value;
+
+            // Construct the request body with the customer data
+            const customerData = {
+                firstName: firstName,
+                lastName: lastName,
+                company: company,
+                address: address,
+                city: city,
+                state: state,
+                country: country,
+                postalCode: postalCode,
+                phone: phone,
+                fax: fax,
+                email: email
+            };
+
+            fetch(`/api/customers/${customerId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(customerData),
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Customer updated:', data);
+                    $('#updateCustomerModal').modal('hide'); // Hide the modal after submission
+                    fetchCustomers(); // Refresh the customer list
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        });
+
+
+
+        function showAlbumsModal(artistId) {
+            fetch(`/api/artists/${artistId}/albums`)
+                .then(response => response.json())
+                .then(albums => {
+                    const albumsContent = document.getElementById('albumsContent');
+                    albumsContent.innerHTML = ''; // Clear previous content
+
+                    // Update the table to include an "Actions" column
+                    let table = `<table class="table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Genre</th>
+                        <th>Tracks</th>
+                        <th>Actions</th> <!-- Added Actions column -->
+                    </tr>
+                </thead>
+                <tbody>`;
+
+                    albums.forEach(album => {
+                        // Button for viewing tracks in an album
+                        const viewTracksBtnHTML = `<button class="btn btn-info btn-sm" onclick="showTracksModal(${album.AlbumId})">View Tracks</button>`;
+
+                        table += `
+                    <tr>
+                        <td>${album.Title}</td>
+                        <td>${album.Genre}</td>
+                        <td>${album.Track}</td> <!-- You may need to adjust this if it directly corresponds to tracks -->
+                        <td>${viewTracksBtnHTML}</td> <!-- View Tracks Button -->
+                    </tr>`;
+                    });
+
+                    table += `</tbody></table>`;
+                    albumsContent.innerHTML = table;
+                    $('#albumsModal').modal('show');
+                })
+                .catch(error => console.error('Error fetching albums:', error));
+        }
+
+
+
+
+        function showEmployeesModal(customerId) {
+            fetch(`/api/customers/${customerId}/employees`)
+                .then(response => response.json())
+                .then(employees => {
+                    const employeesContent = document.getElementById('employeesContent');
+                    employeesContent.innerHTML = ''; // Clear previous content
+
+                    let table = `<table class="table">
+                <thead>
+                    <tr>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Title</th>
+                        <th>Email</th> <!-- Adjust as needed -->
+                    </tr>
+                </thead>
+                <tbody>`;
+
+                    employees.forEach(employee => {
+                        table += `
+                    <tr>
+                        <td>${employee.FirstName}</td>
+                        <td>${employee.LastName}</td>
+                        <td>${employee.Title}</td>
+                        <td>${employee.Email}</td> <!-- Adjust or remove based on your data structure -->
+                    </tr>`;
+                    });
+
+                    table += `</tbody></table>`;
+                    employeesContent.innerHTML = table;
+                    $('#employeesModal').modal('show');
+                })
+                .catch(error => console.error('Error fetching employees:', error));
+        }
+
+
+
+        function showInvoicesModal(customerId) {
+            fetch(`/api/customers/${customerId}/invoices`)
+                .then(response => response.json())
+                .then(invoices => {
+                    const invoicesContent = document.getElementById('invoicesContent');
+                    invoicesContent.innerHTML = ''; // Clear previous content
+
+                    let table = `<table class="table">
+                <thead>
+                    <tr>
+                        <th>Invoice ID</th>
+                        <th>Invoice Date</th>
+                        <th>Track ID</th>
+                        <th>Unit Price</th>
+                        <th>Quantity</th>
+                        <th>Actions</th> <!-- Added Actions column -->
+                    </tr>
+                </thead>
+                <tbody>`;
+
+                    invoices.forEach(invoice => {
+                        // Button for viewing invoice items
+                        const viewItemsBtnHTML = `<button class="btn btn-primary btn-sm" onclick="showInvoiceItemsModal(${invoice.InvoiceId})">View Items</button>`;
+
+                        table += `
+                    <tr>
+                        <td>${invoice.InvoiceId}</td>
+                        <td>${invoice.InvoiceDate}</td>
+                        <td>${invoice.TrackId}</td> <!-- You may need to adjust this if it doesn't directly correspond to invoice items -->
+                        <td>${invoice.UnitPrice}</td>
+                        <td>${invoice.Quantity}</td>
+                        <td>${viewItemsBtnHTML}</td> <!-- Invoice Items Button -->
+                    </tr>`;
+                    });
+
+                    table += `</tbody></table>`;
+                    invoicesContent.innerHTML = table;
+                    $('#invoicesModal').modal('show');
+                })
+                .catch(error => console.error('Error fetching invoices:', error));
+        }
+
+
+        function showTracksModal(albumId) {
+            fetch(`/api/albums/${albumId}/tracks`)
+                .then(response => response.json())
+                .then(tracks => {
+                    const tracksTableBody = document.getElementById('tracksTable').getElementsByTagName('tbody')[0];
+                    tracksTableBody.innerHTML = ''; // Clear previous rows
+
+                    tracks.forEach((track, index) => {
+                        const row = tracksTableBody.insertRow();
+                        const cellIndex = row.insertCell(0);
+                        const cellName = row.insertCell(1);
+                        const cellComposer = row.insertCell(2);
+                        const cellMilliseconds = row.insertCell(3);
+                        const cellBytes = row.insertCell(4);
+                        const cellUnitPrice = row.insertCell(5);
+
+                        cellIndex.innerHTML = index + 1;
+                        cellName.innerHTML = track.Name;
+                        cellComposer.innerHTML = track.Composer;
+                        cellMilliseconds.innerHTML = track.Milliseconds;
+                        cellBytes.innerHTML = track.Bytes;
+                        cellUnitPrice.innerHTML = `$${track.UnitPrice.toFixed(2)}`;
+                    });
+
+                    // Show the modal
+                    $('#tracksModal').modal('show');
+                })
+                .catch(error => console.error('Error fetching tracks:', error));
+        }
+
+        function showInvoiceItemsModal(invoiceId) {
+            fetch(`/api/invoices/${invoiceId}/invoiceitems`)
+                .then(response => response.json())
+                .then(items => {
+                    const invoiceItemsTableBody = document.getElementById('invoiceItemsTable').getElementsByTagName('tbody')[0];
+                    invoiceItemsTableBody.innerHTML = ''; // Clear previous rows
+
+                    items.forEach((item, index) => {
+                        const row = invoiceItemsTableBody.insertRow();
+                        const cellIndex = row.insertCell(0);
+                        const cellTrack = row.insertCell(1);
+                        const cellQuantity = row.insertCell(2);
+                        const cellUnitPrice = row.insertCell(3);
+                        const cellTotal = row.insertCell(4);
+
+                        cellIndex.innerHTML = index + 1;
+                        cellTrack.innerHTML = item.TrackId; // You might want to fetch track names instead of using IDs
+                        cellQuantity.innerHTML = item.Quantity;
+                        cellUnitPrice.innerHTML = `$${item.UnitPrice.toFixed(2)}`;
+                        cellTotal.innerHTML = `$${(item.Quantity * item.UnitPrice).toFixed(2)}`;
+                    });
+
+                    // Show the modal
+                    $('#invoiceItemsModal').modal('show');
+                })
+                .catch(error => console.error('Error fetching invoice items:', error));
+        }
+
+    </script>
+
+</body>
+
+</html>
