@@ -37,18 +37,146 @@ app.get('/api/artists/:id', (req, res) => {
     db.close();
 });
 
+// Create a new invoice item
+app.post('/api/invoiceitems', (req, res) => {
+    const db = new sqlite3.Database(dbPath);
+    const { InvoiceId, TrackId, UnitPrice, Quantity } = req.body;
+    const sql = `INSERT INTO invoice_items (InvoiceId, TrackId, UnitPrice, Quantity) 
+                 VALUES (?, ?, ?, ?)`;
+    const params = [InvoiceId, TrackId, UnitPrice, Quantity];
+
+    db.run(sql, params, function (err) {
+        if (err) {
+            const errorResponse = { error: err.message };
+            console.error('Error Message:', err.message);
+            console.log('Response body:', errorResponse);
+            res.status(500).json(errorResponse);
+        } else {
+            const newInvoiceItemId = this.lastID;
+            const selectSql = `SELECT * FROM invoice_items WHERE InvoiceLineId = ?`;
+
+            db.get(selectSql, [newInvoiceItemId], (err, row) => {
+                if (err) {
+                    const errorResponse = { error: err.message };
+                    console.error('Error fetching invoice item:', err.message);
+                    console.log('Response body:', errorResponse);
+                    res.status(500).json(errorResponse);
+                } else {
+                    const invoiceItemResponse = row;
+                    console.log('Response body:', invoiceItemResponse);
+                    res.status(201).json(invoiceItemResponse);
+                }
+            });
+        }
+    });
+
+    db.close();
+});
+
+
+// Create a new invoice
+app.post('/api/invoices', (req, res) => {
+    const db = new sqlite3.Database(dbPath);
+    const { CustomerId, InvoiceDate, BillingAddress, BillingCity, BillingState, BillingCountry, BillingPostalCode, Total } = req.body;
+    const sql = `INSERT INTO invoices (CustomerId, InvoiceDate, BillingAddress, BillingCity, BillingState, BillingCountry, BillingPostalCode, Total) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+    const params = [CustomerId, InvoiceDate, BillingAddress, BillingCity, BillingState, BillingCountry, BillingPostalCode, Total];
+
+    db.run(sql, params, function (err) {
+        if (err) {
+            const errorResponse = { error: err.message };
+            console.error('Error Message:', err.message);
+            console.log('Response body:', errorResponse);
+            res.status(500).json(errorResponse);
+        } else {
+            const newInvoiceId = this.lastID;
+            const selectSql = `SELECT * FROM invoices WHERE InvoiceId = ?`;
+
+            db.get(selectSql, [newInvoiceId], (err, row) => {
+                if (err) {
+                    const errorResponse = { error: err.message };
+                    console.error('Error fetching invoice:', err.message);
+                    console.log('Response body:', errorResponse);
+                    res.status(500).json(errorResponse);
+                } else {
+                    const invoiceResponse = row;
+                    console.log('Response body:', invoiceResponse);
+                    res.status(201).json(invoiceResponse);
+                }
+            });
+        }
+    });
+
+    db.close();
+});
+
+
+// Create a new track
+app.post('/api/tracks', (req, res) => {
+    const db = new sqlite3.Database(dbPath);
+    const { Name, AlbumId, MediaTypeId, GenreId, Composer, Milliseconds, Bytes, UnitPrice } = req.body;
+    const sql = `INSERT INTO tracks (Name, AlbumId, MediaTypeId, GenreId, Composer, Milliseconds, Bytes, UnitPrice) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+    const params = [Name, AlbumId, MediaTypeId, GenreId, Composer, Milliseconds, Bytes, UnitPrice];
+
+    db.run(sql, params, function (err) {
+        if (err) {
+            const errorResponse = { error: err.message };
+            console.error('Error Message:', err.message);
+            console.log('Response body:', errorResponse);
+            res.status(500).json(errorResponse);
+        } else {
+            const newTrackId = this.lastID;
+            const selectSql = `SELECT * FROM tracks WHERE TrackId = ?`;
+
+            db.get(selectSql, [newTrackId], (err, row) => {
+                if (err) {
+                    const errorResponse = { error: err.message };
+                    console.error('Error fetching track:', err.message);
+                    console.log('Response body:', errorResponse);
+                    res.status(500).json(errorResponse);
+                } else {
+                    const trackResponse = row;
+                    console.log('Response body:', trackResponse);
+                    res.status(201).json(trackResponse);
+                }
+            });
+        }
+    });
+
+    db.close();
+});
+
 // Create a new artist
 app.post('/api/artists', (req, res) => {
     const db = new sqlite3.Database(dbPath);
-    const { name } = req.body;
-    db.run("INSERT INTO artists (Name) VALUES (?)", [name], function (err) {
+    const { Name } = req.body;
+
+    db.run("INSERT INTO artists (Name) VALUES (?)", [Name], function (err) {
         if (err) {
-            console.error(err.message);
-            res.status(500).send('Error adding new artist');
-            return;
+            const errorResponse = { error: err.message };
+            console.error('Error Message:', err.message);
+            console.log('Response body:', errorResponse);
+            res.status(500).json(errorResponse);
+        } else {
+            const newArtistId = this.lastID;
+            const selectSql = `SELECT * FROM artists WHERE ArtistId = ?`;
+
+            db.get(selectSql, [newArtistId], (err, row) => {
+                if (err) {
+                    const errorResponse = { error: err.message };
+                    console.error('Error fetching artist:', err.message);
+                    console.log('Response body:', errorResponse);
+                    res.status(500).json(errorResponse);
+                } else {
+                    const artistResponse = row;
+                    console.log('Response body:', artistResponse);
+                    res.status(201).json(artistResponse);
+                }
+            });
         }
-        res.status(201).json({ artistId: this.lastID });
     });
+
     db.close();
 });
 
@@ -127,20 +255,86 @@ app.get('/api/customers/:id', (req, res) => {
     db.close();
 });
 
+app.post('/api/albums', (req, res) => {
+    const db = new sqlite3.Database(dbPath);
+    const { Title, ArtistId } = req.body;  // Use PascalCase as per the request body
+
+    console.log('Received title:', Title);
+    console.log('Received artistId:', ArtistId);
+
+    if (!Title || !ArtistId) {
+        const errorResponse = { error: 'Title and ArtistId are required' };
+        console.log('Response body:', errorResponse);
+        return res.status(400).json(errorResponse);
+    }
+
+    const insertSql = `INSERT INTO albums (Title, ArtistId) VALUES (?, ?)`;
+    const insertParams = [Title, ArtistId];
+
+    db.run(insertSql, insertParams, function (err) {
+        if (err) {
+            const errorResponse = { error: err.message };
+            console.error('Error Message:', err.message);
+            console.log('Response body:', errorResponse);
+            res.status(500).json(errorResponse);
+        } else {
+            // After inserting, query the newly inserted album
+            const newAlbumId = this.lastID;
+            const selectSql = `SELECT * FROM albums WHERE AlbumId = ?`;
+            
+            db.get(selectSql, [newAlbumId], (err, row) => {
+                if (err) {
+                    const errorResponse = { error: err.message };
+                    console.error('Error fetching album:', err.message);
+                    console.log('Response body:', errorResponse);
+                    res.status(500).json(errorResponse);
+                } else {
+                    const albumResponse = row;
+                    console.log('Response body:', albumResponse);
+                    res.status(201).json(albumResponse);
+                }
+            });
+        }
+    });
+
+    db.close();
+});
+
+
 // Create a new customer
 app.post('/api/customers', (req, res) => {
     const db = new sqlite3.Database(dbPath);
-    const { firstName, lastName, company, address, city, state, country, postalCode, phone, email } = req.body;
+    const { FirstName, LastName, Company, Address, City, State, Country, PostalCode, Phone, Email } = req.body;
+
     const sql = `INSERT INTO customers (FirstName, LastName, Company, Address, City, State, Country, PostalCode, Phone, Email) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-    const params = [firstName, lastName, company, address, city, state, country, postalCode, phone, email];
+    const params = [FirstName, LastName, Company, Address, City, State, Country, PostalCode, Phone, Email];
+
     db.run(sql, params, function (err) {
         if (err) {
-            res.status(500).json({ error: err.message });
+            const errorResponse = { error: err.message };
+            console.error('Error Message:', err.message);
+            console.log('Response body:', errorResponse);
+            res.status(500).json(errorResponse);
         } else {
-            res.status(201).json({ customerId: this.lastID });
+            const newCustomerId = this.lastID;
+            const selectSql = `SELECT * FROM customers WHERE CustomerId = ?`;
+
+            db.get(selectSql, [newCustomerId], (err, row) => {
+                if (err) {
+                    const errorResponse = { error: err.message };
+                    console.error('Error fetching customer:', err.message);
+                    console.log('Response body:', errorResponse);
+                    res.status(500).json(errorResponse);
+                } else {
+                    const customerResponse = row;
+                    console.log('Response body:', customerResponse);
+                    res.status(201).json(customerResponse);
+                }
+            });
         }
     });
+
     db.close();
 });
 
@@ -409,6 +603,69 @@ app.get('/api/albums/:id/tracks', (req, res) => {
             res.json(tracks);
         }
     });
+});
+
+// Delete an album
+app.delete('/api/albums/:id', (req, res) => {
+    const { id } = req.params;
+    const db = new sqlite3.Database(dbPath);
+    db.run("DELETE FROM albums WHERE AlbumId = ?", id, function (err) {
+        if (err) {
+            res.status(500).json({ error: err.message });
+        } else {
+            res.json({ message: `Rows deleted: ${this.changes}` });
+        }
+    });
+    db.close();
+});
+
+// Delete a track
+app.delete('/api/tracks/:id', (req, res) => {
+    const { id } = req.params;
+    const db = new sqlite3.Database(dbPath);
+    db.run("DELETE FROM tracks WHERE TrackId = ?", id, function (err) {
+        if (err) {
+            res.status(500).json({ error: err.message });
+        } else {
+            res.json({ message: `Rows deleted: ${this.changes}` });
+        }
+    });
+    db.close();
+});
+
+// Delete an invoice
+app.delete('/api/invoices/:id', (req, res) => {
+    const { id } = req.params;
+    const db = new sqlite3.Database(dbPath);
+    db.run("DELETE FROM invoices WHERE InvoiceId = ?", id, function (err) {
+        if (err) {
+            res.status(500).json({ error: err.message });
+        } else {
+            res.json({ message: `Rows deleted: ${this.changes}` });
+        }
+    });
+    db.close();
+});
+
+// Delete an invoice item
+app.delete('/api/invoiceitems/:id', (req, res) => {
+    const { id } = req.params;
+    const db = new sqlite3.Database(dbPath);
+    db.run("DELETE FROM invoice_items WHERE InvoiceItemId = ?", id, function (err) {
+        if (err) {
+            res.status(500).json({ error: err.message });
+        } else {
+            res.json({ message: `Rows deleted: ${this.changes}` });
+        }
+    });
+    db.close();
+});
+
+app.use((err, req, res, next) => {
+    console.error('Internal Server Error:', err.message); // Log error message
+    console.error(err.stack); // Log the stack trace for debugging
+
+    res.status(500).json({ error: 'Internal Server Error' }); // Respond to client
 });
 
 const PORT = process.env.PORT || 3001;
